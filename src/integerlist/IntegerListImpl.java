@@ -17,10 +17,14 @@ public class IntegerListImpl implements IntegerList {
     @Override
     public Integer add(Integer item) {
         if (size >= storage.length) {
-            storage = Arrays.copyOf(storage, (int) (storage.length + (storage.length * 0.5)));
+            grow();
         }
         storage[size++] = item;
         return item;
+    }
+
+    private void grow() {
+        storage = Arrays.copyOf(storage, (int) (storage.length + (storage.length * 0.5)));
     }
 
     @Override
@@ -33,7 +37,6 @@ public class IntegerListImpl implements IntegerList {
         size++;
         return item;
     }
-
 
     @Override
     public Integer set(int index, Integer item) {
@@ -54,6 +57,9 @@ public class IntegerListImpl implements IntegerList {
             System.arraycopy(storage, itemIndex + 1, storage, itemIndex, size - itemIndex);
         }
         size--;
+        if (size < storage.length / 2) {
+            resize();
+        }
         return item;
     }
 
@@ -67,13 +73,20 @@ public class IntegerListImpl implements IntegerList {
             System.arraycopy(storage, index + 1, storage, index, size - index);
         }
         size--;
+        if (size < storage.length / 2) {
+            resize();
+        }
         return itemToRemove;
+    }
+
+    private void resize() {
+        storage = Arrays.copyOf(storage, (storage.length - (storage.length / 3)));
     }
 
     @Override
     public boolean contains(Integer item) {
         Integer[] storageClone = storage.clone();
-        sort(storageClone);
+        sort(storageClone, 0, size - 1);
         int min = 0;
         int max = size - 1;
         while (min <= max) {
@@ -147,16 +160,36 @@ public class IntegerListImpl implements IntegerList {
         return Arrays.copyOf(storage, size);
     }
 
-    private void sort(Integer[] arr) {
-        for (int i = 1; i < size; i++) {
-            int temp = get(i);
-            int j = i;
-            while (j > 0 && arr[j - 1] >= temp) {
-                arr[j] = arr[j - 1];
-                j--;
-            }
-            arr[j] = temp;
+    private void sort(Integer[] arr, Integer begin, Integer end) {
+        if (begin < end) {
+            int partitionIndex = partition(arr, begin, end);
+
+            sort(arr, begin, partitionIndex - 1);
+            sort(arr, partitionIndex + 1, end);
         }
     }
+
+    private static int partition(Integer[] arr, Integer begin, Integer end) {
+        int pivot = arr[end];
+        int i = (begin - 1);
+
+        for (int j = begin; j < end; j++) {
+            if (arr[j] <= pivot) {
+                i++;
+
+                swapElements(arr, i, j);
+            }
+        }
+
+        swapElements(arr, i + 1, end);
+        return i + 1;
+    }
+
+    private static void swapElements(Integer[] arr, Integer left, Integer right) {
+        int temp = arr[left];
+        arr[left] = arr[right];
+        arr[right] = temp;
+    }
+
 
 }
